@@ -15,9 +15,108 @@ We often need to prefill tables during tests, checks, and measurements. These ge
 
 ## Installation
 
+As a library:
+
 ```bash
-pnpm install
+pnpm add @mkven/samples-generation
+# or
+npm install @mkven/samples-generation
 ```
+
+For CLI usage (no install needed):
+
+```bash
+npx @mkven/samples-generation scenario.json --postgres
+```
+
+## CLI Usage
+
+The package includes a CLI that can be run via `npx`:
+
+```bash
+npx @mkven/samples-generation <scenario.json> [options]
+```
+
+### Database Selection
+
+```bash
+--sqlite               # Generate for SQLite
+--postgres             # Generate for PostgreSQL  
+--clickhouse           # Generate for ClickHouse
+--trino                # Generate for Trino (Iceberg)
+```
+
+### Common Options
+
+```bash
+-r, --rows <count>     # Override row count (supports 1_000_000 format)
+-b, --batch <size>     # Batch size for large datasets
+--drop                 # Drop tables before generating
+--truncate             # Truncate tables before generating
+```
+
+### Connection Options
+
+```bash
+# PostgreSQL
+--pg-host, --pg-port, --pg-database, --pg-user, --pg-password
+
+# ClickHouse  
+--ch-host, --ch-port, --ch-database, --ch-user, --ch-password
+
+# Trino
+--trino-host, --trino-port, --trino-user, --trino-catalog, --trino-schema
+
+# SQLite
+--sqlite-path
+```
+
+### Examples
+
+```bash
+# Generate 10,000 rows in PostgreSQL
+npx @mkven/samples-generation scenario.json --postgres -r 10000
+
+# Generate in Trino with custom host
+npx @mkven/samples-generation scenario.json --trino --trino-host db.example.com
+
+# Generate in multiple databases with drop
+npx @mkven/samples-generation scenario.json --postgres --clickhouse --drop
+
+# Large dataset with batching
+npx @mkven/samples-generation scenario.json --trino -r 1_000_000_000 -b 100_000_000
+```
+
+### Scenario File Format
+
+```json
+{
+  "name": "My scenario",
+  "steps": [
+    {
+      "table": {
+        "name": "users",
+        "columns": [
+          { "name": "id", "type": "bigint", "generator": { "kind": "sequence" } },
+          { "name": "name", "type": "string", "generator": { "kind": "randomString", "length": 10 } },
+          { "name": "email", "type": "string", "generator": { "kind": "constant", "value": "" } }
+        ]
+      },
+      "rowCount": 1000,
+      "transformations": [
+        {
+          "description": "Generate email",
+          "transformations": [
+            { "kind": "template", "column": "email", "template": "{name}@example.com", "lowercase": true }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+See `examples/` directory for more scenario examples.
 
 ## Measurements of generations
 
