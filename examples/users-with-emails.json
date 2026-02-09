@@ -1,0 +1,100 @@
+{
+  "name": "Users with emails",
+  "description": "Users table with first/last names and templated email addresses",
+  "steps": [
+    {
+      "table": {
+        "name": "users",
+        "columns": [
+          {
+            "name": "id",
+            "type": "bigint",
+            "generator": { "kind": "sequence", "start": 1 }
+          },
+          {
+            "name": "first_name",
+            "type": "string",
+            "generator": {
+              "kind": "choice",
+              "values": [
+                "John",
+                "Jane",
+                "Michael",
+                "Sarah",
+                "David",
+                "Emily",
+                "James",
+                "Emma",
+                "Robert",
+                "Olivia"
+              ]
+            }
+          },
+          {
+            "name": "last_name",
+            "type": "string",
+            "generator": {
+              "kind": "choice",
+              "values": [
+                "Smith",
+                "Johnson",
+                "Williams",
+                "Brown",
+                "Jones",
+                "Miller",
+                "Davis",
+                "Wilson",
+                "Moore",
+                "Taylor"
+              ]
+            }
+          },
+          {
+            "name": "email",
+            "type": "string",
+            "generator": { "kind": "constant", "value": "" }
+          },
+          {
+            "name": "age",
+            "type": "integer",
+            "generator": { "kind": "randomInt", "min": 18, "max": 80 }
+          },
+          {
+            "name": "salary",
+            "type": "float",
+            "generator": {
+              "kind": "randomFloat",
+              "min": 30000,
+              "max": 150000,
+              "precision": 2
+            }
+          },
+          {
+            "name": "is_active",
+            "type": "boolean",
+            "generator": { "kind": "choice", "values": [true, false] }
+          },
+          {
+            "name": "created_at",
+            "type": "datetime",
+            "generator": { "kind": "datetime" }
+          }
+        ]
+      },
+      "rowCount": 1000,
+      "transformations": [
+        {
+          "description": "Generate email from first and last name",
+          "transformations": [
+            {
+              "kind": "template",
+              "column": "email",
+              "template": "{first_name}.{last_name}@example.com",
+              "lowercase": true
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

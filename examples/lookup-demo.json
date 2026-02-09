@@ -1,0 +1,146 @@
+{
+  "name": "Employees with department lookup",
+  "description": "Two tables: departments (lookup) and employees with department_name populated via lookup transformation",
+  "steps": [
+    {
+      "table": {
+        "name": "departments",
+        "description": "Departments lookup table",
+        "columns": [
+          {
+            "name": "id",
+            "type": "integer",
+            "generator": { "kind": "sequence", "start": 1 }
+          },
+          {
+            "name": "name",
+            "type": "string",
+            "generator": {
+              "kind": "choice",
+              "values": [
+                "Engineering",
+                "Sales",
+                "Marketing",
+                "HR",
+                "Finance",
+                "Operations",
+                "Legal",
+                "Support",
+                "R&D",
+                "Product"
+              ]
+            }
+          },
+          {
+            "name": "budget",
+            "type": "float",
+            "generator": {
+              "kind": "randomFloat",
+              "min": 100000,
+              "max": 10000000,
+              "precision": 2
+            }
+          }
+        ]
+      },
+      "rowCount": 10
+    },
+    {
+      "table": {
+        "name": "employees",
+        "description": "Employees with department reference",
+        "columns": [
+          {
+            "name": "id",
+            "type": "bigint",
+            "generator": { "kind": "sequence", "start": 1 }
+          },
+          {
+            "name": "first_name",
+            "type": "string",
+            "generator": {
+              "kind": "choice",
+              "values": [
+                "John",
+                "Jane",
+                "Michael",
+                "Sarah",
+                "David",
+                "Emily",
+                "James",
+                "Emma",
+                "Robert",
+                "Olivia"
+              ]
+            }
+          },
+          {
+            "name": "last_name",
+            "type": "string",
+            "generator": {
+              "kind": "choice",
+              "values": [
+                "Smith",
+                "Johnson",
+                "Williams",
+                "Brown",
+                "Jones",
+                "Miller",
+                "Davis",
+                "Wilson",
+                "Moore",
+                "Taylor"
+              ]
+            }
+          },
+          {
+            "name": "department_id",
+            "type": "integer",
+            "generator": { "kind": "randomInt", "min": 1, "max": 10 }
+          },
+          {
+            "name": "department_name",
+            "type": "string",
+            "generator": { "kind": "constant", "value": "" }
+          },
+          {
+            "name": "salary",
+            "type": "float",
+            "generator": {
+              "kind": "randomFloat",
+              "min": 30000,
+              "max": 200000,
+              "precision": 2
+            }
+          },
+          {
+            "name": "hire_date",
+            "type": "datetime",
+            "generator": { "kind": "datetime" }
+          }
+        ]
+      },
+      "rowCount": 1000
+    },
+    {
+      "tableName": "employees",
+      "transformations": [
+        {
+          "description": "Lookup department name from departments table",
+          "transformations": [
+            {
+              "kind": "lookup",
+              "column": "department_name",
+              "fromTable": "departments",
+              "fromColumn": "name",
+              "joinOn": {
+                "targetColumn": "department_id",
+                "lookupColumn": "id"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

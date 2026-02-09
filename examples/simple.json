@@ -1,0 +1,42 @@
+{
+  "name": "Simple benchmark",
+  "description": "Basic test with 5 columns: id, name, value, status, created_at",
+  "steps": [
+    {
+      "table": {
+        "name": "samples",
+        "columns": [
+          {
+            "name": "id",
+            "type": "bigint",
+            "generator": { "kind": "sequence", "start": 1 }
+          },
+          {
+            "name": "name",
+            "type": "string",
+            "generator": { "kind": "randomString", "length": 10 }
+          },
+          {
+            "name": "value",
+            "type": "float",
+            "generator": { "kind": "randomFloat", "min": 0, "max": 1000 }
+          },
+          {
+            "name": "status",
+            "type": "string",
+            "generator": {
+              "kind": "choice",
+              "values": ["active", "pending", "inactive"]
+            }
+          },
+          {
+            "name": "created_at",
+            "type": "datetime",
+            "generator": { "kind": "datetime" }
+          }
+        ]
+      },
+      "rowCount": 1000
+    }
+  ]
+}
