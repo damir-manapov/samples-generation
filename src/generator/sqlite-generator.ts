@@ -1,16 +1,16 @@
 import Database from "better-sqlite3";
-import type {
-  TableConfig,
-  GeneratedRow,
-  ColumnConfig,
-  GeneratorConfig,
-  ChoiceByLookupGenerator,
-  Transformation,
-  MutationOperation,
-  SwapTransformation,
-} from "./types.js";
 import { BaseDataGenerator } from "./base-generator.js";
 import { escapeSqliteLiteral } from "./escape.js";
+import type {
+  ChoiceByLookupGenerator,
+  ColumnConfig,
+  GeneratedRow,
+  GeneratorConfig,
+  MutationOperation,
+  SwapTransformation,
+  TableConfig,
+  Transformation,
+} from "./types.js";
 import { getLookupTableName } from "./utils.js";
 
 export interface SQLiteConfig {
@@ -339,8 +339,8 @@ export class SQLiteDataGenerator extends BaseDataGenerator {
           // Build expression that randomly picks from available operations
           let mutateExpr: string;
           if (operations.length === 1) {
-            // We know operations[0] exists since length === 1
-            mutateExpr = mutationExprs[operations[0]!]; // eslint-disable-line @typescript-eslint/no-non-null-assertion
+            // biome-ignore lint/style/noNonNullAssertion: length === 1 guarantees element exists
+            mutateExpr = mutationExprs[operations[0]!];
           } else {
             // Use modulo to pick operation index, then CASE to select expression
             const opIndex = `(abs(random()) % ${String(operations.length)})`;

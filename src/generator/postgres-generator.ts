@@ -1,16 +1,16 @@
 import postgres, { type Sql } from "postgres";
-import type {
-  TableConfig,
-  GeneratedRow,
-  ColumnConfig,
-  GeneratorConfig,
-  ChoiceByLookupGenerator,
-  Transformation,
-  MutationOperation,
-  SwapTransformation,
-} from "./types.js";
 import { BaseDataGenerator } from "./base-generator.js";
 import { escapePostgresIdentifier, escapePostgresLiteral } from "./escape.js";
+import type {
+  ChoiceByLookupGenerator,
+  ColumnConfig,
+  GeneratedRow,
+  GeneratorConfig,
+  MutationOperation,
+  SwapTransformation,
+  TableConfig,
+  Transformation,
+} from "./types.js";
 import { getLookupTableName } from "./utils.js";
 
 export interface PostgresConfig {
@@ -323,8 +323,8 @@ export class PostgresDataGenerator extends BaseDataGenerator {
           // Build expression that randomly picks from available operations
           let mutateExpr: string;
           if (operations.length === 1) {
-            // We know operations[0] exists since length === 1
-            mutateExpr = mutationExprs[operations[0]!]; // eslint-disable-line @typescript-eslint/no-non-null-assertion
+            // biome-ignore lint/style/noNonNullAssertion: length === 1 guarantees element exists
+            mutateExpr = mutationExprs[operations[0]!];
           } else {
             // Use CASE with random() to pick operation
             const cases = operations.map((op, i) => {

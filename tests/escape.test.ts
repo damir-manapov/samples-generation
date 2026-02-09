@@ -1,12 +1,12 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
-  escapePostgresIdentifier,
-  escapePostgresLiteral,
   escapeClickHouseIdentifier,
   escapeClickHouseLiteral,
+  escapePostgresIdentifier,
+  escapePostgresLiteral,
+  escapeSqliteLiteral,
   escapeTrinoIdentifier,
   escapeTrinoLiteral,
-  escapeSqliteLiteral,
 } from "../src/generator/escape.js";
 
 describe("escapePostgresIdentifier", () => {

@@ -6,14 +6,28 @@ set -euo pipefail
 echo "[renovate-check] Checking for dependency updates..."
 echo ""
 
+# Workaround for Node.js 24+ "happy eyeballs" (autoSelectFamily) bug
+# that causes timeouts when connecting to hosts with both IPv4 and IPv6
+# but broken IPv6 connectivity (like Docker Hub on some networks)
+PRELOAD_SCRIPT=$(mktemp)
+echo "require('net').setDefaultAutoSelectFamily(false);" > "$PRELOAD_SCRIPT"
+trap "rm -f $PRELOAD_SCRIPT" EXIT
+export NODE_OPTIONS="${NODE_OPTIONS:-} --require=$PRELOAD_SCRIPT --dns-result-order=ipv4first"
+
 # Run renovate with JSON output and debug level to get version info
-OUTPUT=$(LOG_FORMAT=json LOG_LEVEL=debug npx -y renovate --platform=local --dry-run --require-config=ignored 2>&1 || true)
+OUTPUT=$(LOG_FORMAT=json LOG_LEVEL=debug npx -y renovate --platform=local --dry-run 2>&1 || true)
+
+# Check for external-host-error (network issues)
+if echo "$OUTPUT" | grep -q '"result":"external-host-error"'; then
+  echo "⚠ Renovate couldn't reach external hosts (network issue)"
+  exit 2
+fi
 
 # Extract the packageFiles message which contains all dependency info
 PACKAGES_JSON=$(echo "$OUTPUT" | grep '"msg":"packageFiles with updates"' | head -1)
 
 if [[ -z "$PACKAGES_JSON" ]]; then
-  echo "⚠ Could not parse Renovate output"
+  echo "⚠ Could not parse Renovate output (no updates found or Renovate error)"
   exit 1
 fi
 

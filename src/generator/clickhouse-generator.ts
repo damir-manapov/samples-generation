@@ -1,19 +1,19 @@
-import { createClient, type ClickHouseClient } from "@clickhouse/client";
-import type {
-  TableConfig,
-  GeneratedRow,
-  ColumnConfig,
-  GeneratorConfig,
-  Transformation,
-  MutationOperation,
-  LookupTransformation,
-  SwapTransformation,
-} from "./types.js";
+import { type ClickHouseClient, createClient } from "@clickhouse/client";
 import { BaseDataGenerator } from "./base-generator.js";
 import {
   escapeClickHouseIdentifier,
   escapeClickHouseLiteral,
 } from "./escape.js";
+import type {
+  ColumnConfig,
+  GeneratedRow,
+  GeneratorConfig,
+  LookupTransformation,
+  MutationOperation,
+  SwapTransformation,
+  TableConfig,
+  Transformation,
+} from "./types.js";
 import { getLookupTableName } from "./utils.js";
 
 export interface ClickHouseConfig {
@@ -355,20 +355,20 @@ export class ClickHouseDataGenerator extends BaseDataGenerator {
           // Build expression that randomly picks from available operations
           let mutateExpr: string;
           if (operations.length === 1) {
-            // We know operations[0] exists since length === 1
-            mutateExpr = mutationExprs[operations[0]!]; // eslint-disable-line @typescript-eslint/no-non-null-assertion
+            // biome-ignore lint/style/noNonNullAssertion: length === 1 guarantees element exists
+            mutateExpr = mutationExprs[operations[0]!];
           } else {
             // Use multiIf with rand() to pick operation
             const conditions: string[] = [];
             for (let i = 0; i < operations.length - 1; i++) {
               const threshold = (i + 1) / operations.length;
-              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+              // biome-ignore lint/style/noNonNullAssertion: index is within bounds
               const op = operations[i]!;
               conditions.push(
                 `rand() / 4294967295.0 < ${String(threshold)}, ${mutationExprs[op]}`
               );
             }
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            // biome-ignore lint/style/noNonNullAssertion: length > 1 guarantees last element exists
             const lastOp = operations[operations.length - 1]!;
             conditions.push(mutationExprs[lastOp]);
             mutateExpr = `multiIf(${conditions.join(", ")})`;

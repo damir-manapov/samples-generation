@@ -1,9 +1,9 @@
-import { describe, it, expect } from "vitest";
-import type { GeneratorConfig } from "../src/generator/types.js";
-import { generatorToPostgresExpr } from "../src/generator/postgres-generator.js";
+import { describe, expect, it } from "vitest";
 import { generatorToClickHouseExpr } from "../src/generator/clickhouse-generator.js";
+import { generatorToPostgresExpr } from "../src/generator/postgres-generator.js";
 import { generatorToSqliteExpr } from "../src/generator/sqlite-generator.js";
 import { generatorToTrinoExpr } from "../src/generator/trino-generator.js";
+import type { GeneratorConfig } from "../src/generator/types.js";
 
 // Test data for each generator type
 const generatorConfigs: {
@@ -86,14 +86,14 @@ const generatorConfigs: {
 ];
 
 describe("generatorToPostgresExpr", () => {
-  it.each(generatorConfigs)(
-    "should generate valid SQL for $name",
-    ({ config, seqExpr }) => {
-      const result = generatorToPostgresExpr(config, seqExpr);
-      expect(typeof result).toBe("string");
-      expect(result.length).toBeGreaterThan(0);
-    }
-  );
+  it.each(generatorConfigs)("should generate valid SQL for $name", ({
+    config,
+    seqExpr,
+  }) => {
+    const result = generatorToPostgresExpr(config, seqExpr);
+    expect(typeof result).toBe("string");
+    expect(result.length).toBeGreaterThan(0);
+  });
 
   it("should generate correct sequence expression", () => {
     expect(
@@ -172,14 +172,14 @@ describe("generatorToPostgresExpr", () => {
 });
 
 describe("generatorToClickHouseExpr", () => {
-  it.each(generatorConfigs)(
-    "should generate valid SQL for $name",
-    ({ config, seqExpr }) => {
-      const result = generatorToClickHouseExpr(config, seqExpr);
-      expect(typeof result).toBe("string");
-      expect(result.length).toBeGreaterThan(0);
-    }
-  );
+  it.each(generatorConfigs)("should generate valid SQL for $name", ({
+    config,
+    seqExpr,
+  }) => {
+    const result = generatorToClickHouseExpr(config, seqExpr);
+    expect(typeof result).toBe("string");
+    expect(result.length).toBeGreaterThan(0);
+  });
 
   it("should generate correct sequence expression", () => {
     expect(
@@ -255,14 +255,14 @@ describe("generatorToClickHouseExpr", () => {
 });
 
 describe("generatorToSqliteExpr", () => {
-  it.each(generatorConfigs)(
-    "should generate valid SQL for $name",
-    ({ config, seqExpr }) => {
-      const result = generatorToSqliteExpr(config, seqExpr);
-      expect(typeof result).toBe("string");
-      expect(result.length).toBeGreaterThan(0);
-    }
-  );
+  it.each(generatorConfigs)("should generate valid SQL for $name", ({
+    config,
+    seqExpr,
+  }) => {
+    const result = generatorToSqliteExpr(config, seqExpr);
+    expect(typeof result).toBe("string");
+    expect(result.length).toBeGreaterThan(0);
+  });
 
   it("should generate correct sequence expression", () => {
     expect(
@@ -340,14 +340,14 @@ describe("generatorToSqliteExpr", () => {
 });
 
 describe("generatorToTrinoExpr", () => {
-  it.each(generatorConfigs)(
-    "should generate valid SQL for $name",
-    ({ config, seqExpr }) => {
-      const result = generatorToTrinoExpr(config, seqExpr);
-      expect(typeof result).toBe("string");
-      expect(result.length).toBeGreaterThan(0);
-    }
-  );
+  it.each(generatorConfigs)("should generate valid SQL for $name", ({
+    config,
+    seqExpr,
+  }) => {
+    const result = generatorToTrinoExpr(config, seqExpr);
+    expect(typeof result).toBe("string");
+    expect(result.length).toBeGreaterThan(0);
+  });
 
   it("should generate correct sequence expression", () => {
     expect(

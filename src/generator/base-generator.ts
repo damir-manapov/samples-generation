@@ -1,20 +1,19 @@
 import type {
   DataGenerator,
-  TableConfig,
+  GeneratedRow,
   GenerateOptions,
   GenerateResult,
-  GeneratedRow,
+  ScenarioGenerateStep,
+  ScenarioOptions,
+  ScenarioResult,
+  ScenarioStep,
+  ScenarioStepResult,
+  TableConfig,
   Transformation,
   TransformationBatch,
   TransformResult,
-  ScenarioOptions,
-  ScenarioResult,
-  ScenarioStepResult,
-  ScenarioStep,
-  ScenarioGenerateStep,
 } from "./types.js";
-import { formatDuration } from "./utils.js";
-import { formatBytes } from "./utils.js";
+import { formatBytes, formatDuration } from "./utils.js";
 
 /** Type guard for generate steps */
 function isGenerateStep(step: ScenarioStep): step is ScenarioGenerateStep {
@@ -209,7 +208,8 @@ export abstract class BaseDataGenerator implements DataGenerator {
     let batchesApplied = 0;
 
     for (let i = 0; i < batches.length; i++) {
-      const batch = batches[i]!; // eslint-disable-line @typescript-eslint/no-non-null-assertion
+      // biome-ignore lint/style/noNonNullAssertion: index is within bounds
+      const batch = batches[i]!;
       if (batch.transformations.length > 0) {
         const batchLabel = batch.description ?? `batch ${String(i + 1)}`;
         console.log(

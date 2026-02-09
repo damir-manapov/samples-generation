@@ -11,12 +11,12 @@ else
 fi
 
 echo ""
-echo "=== Checking for vulnerabilities ==="
-pnpm audit --audit-level=moderate
-
-echo ""
 echo "=== Checking for outdated dependencies ==="
 ./renovate-check.sh
+
+echo ""
+echo "=== Checking for vulnerabilities ==="
+pnpm audit --audit-level=moderate
 
 echo ""
 echo "=== Health check passed ==="

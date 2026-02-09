@@ -42,10 +42,11 @@
     "test": "vitest run",
     "test:e2e": "vitest run --config vitest.e2e.config.ts",
     "test:watch": "vitest",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "lint": "biome lint .",
+    "lint:fix": "biome lint --write .",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "check": "biome check --write .",
     "typecheck": "tsc --noEmit",
     "release": "release-it",
     "release:dry": "release-it --dry-run",
@@ -59,26 +60,22 @@
     "compose:reset": "docker compose -f compose/docker-compose.yml down --volumes --remove-orphans"
   },
   "dependencies": {
-    "@clickhouse/client": "^1.15.0",
+    "@clickhouse/client": "^1.17.0",
     "@mkven/name-dictionaries": "^0.1.0",
-    "better-sqlite3": "^12.5.0",
+    "better-sqlite3": "^12.6.2",
     "pg-format": "^1.0.4",
-    "postgres": "^3.4.7",
+    "postgres": "^3.4.8",
     "trino-client": "^0.2.9"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.2",
-    "@release-it/conventional-changelog": "^10.0.4",
+    "@biomejs/biome": "^2.3.14",
+    "@release-it/conventional-changelog": "^10.0.5",
     "@types/better-sqlite3": "^7.6.13",
-    "@types/node": "^25.0.3",
+    "@types/node": "^25.2.2",
     "@types/pg-format": "^1.0.5",
-    "eslint": "^9.39.2",
-    "eslint-config-prettier": "^10.1.8",
-    "prettier": "^3.7.4",
-    "release-it": "^19.2.0",
+    "release-it": "^19.2.4",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.50.1",
-    "vitest": "^4.0.16"
+    "vitest": "^4.0.18"
   }
 }

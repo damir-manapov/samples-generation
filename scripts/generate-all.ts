@@ -1,21 +1,21 @@
 import { parseArgs } from "node:util";
 import {
-  getEnglishMaleNames,
   getEnglishFemaleNames,
+  getEnglishMaleNames,
   getEnglishSurnames,
-  getRussianMaleNames,
   getRussianFemaleNames,
-  getRussianMaleSurnames,
   getRussianFemaleSurnames,
+  getRussianMaleNames,
+  getRussianMaleSurnames,
 } from "@mkven/name-dictionaries";
 import {
-  PostgresDataGenerator,
   ClickHouseDataGenerator,
+  type DataGenerator,
+  formatDuration,
+  PostgresDataGenerator,
+  type Scenario,
   SQLiteDataGenerator,
   TrinoDataGenerator,
-  formatDuration,
-  type DataGenerator,
-  type Scenario,
 } from "../src/generator/index.js";
 
 // Usage:
