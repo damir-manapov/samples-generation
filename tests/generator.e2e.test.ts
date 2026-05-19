@@ -191,6 +191,54 @@ describe.each(generators.filter((g) => !g.skip))("DataGenerator: $name", ({
     }
   });
 
+  it("should respect randomString alphabet (digits-only, varies per row)", async () => {
+    const alphabetTest: TableConfig = {
+      name: "test_random_string_alphabet",
+      columns: [
+        {
+          name: "id",
+          type: "integer",
+          generator: { kind: "sequence", start: 1 },
+        },
+        {
+          name: "code",
+          type: "string",
+          generator: {
+            kind: "randomString",
+            length: 6,
+            alphabet: "0123456789",
+          },
+        },
+      ],
+    };
+
+    await generator.dropTable(alphabetTest.name);
+    await generator.createTable(alphabetTest);
+    await generator.generate({
+      table: alphabetTest,
+      rowCount: 200,
+      createTable: false,
+      optimize: false,
+    });
+
+    const rows = await generator.queryRows(alphabetTest.name, 200);
+    expect(rows.length).toBe(200);
+
+    // Every character must be a digit and length must match.
+    for (const row of rows) {
+      expect(typeof row.code).toBe("string");
+      expect(row.code).toMatch(/^[0-9]{6}$/);
+    }
+
+    // Values must actually vary across rows — guards against a regression
+    // where the alphabet expression evaluates once per insert (e.g. ClickHouse
+    // `rand(i)` with constant arg).
+    const distinct = new Set(rows.map((r) => r.code));
+    expect(distinct.size).toBeGreaterThan(100);
+
+    await generator.dropTable(alphabetTest.name);
+  });
+
   it("should respect choiceByLookup generator", async () => {
     const choiceByLookupTest: TableConfig = {
       name: "test_choice_from_table",
