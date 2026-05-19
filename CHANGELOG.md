@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.6.0](https://github.com/making-ventures/samples-generation/compare/v0.5.2...v0.6.0) (2026-05-19)
+
+### Features
+
+* **randomString:** support optional alphabet across all databases ([9ff0570](https://github.com/making-ventures/samples-generation/commit/9ff0570e5b5fec5b2dcc74142fc81ae9fe4cb3e5))
+
 ## [0.5.2](https://github.com/making-ventures/samples-generation/compare/v0.5.1...v0.5.2) (2026-05-19)
 
 ## [0.4.4](https://github.com/making-ventures/samples-generation/compare/v0.4.2...v0.4.4) (2025-12-24)
