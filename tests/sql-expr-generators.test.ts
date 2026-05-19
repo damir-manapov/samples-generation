@@ -494,14 +494,14 @@ describe("randomString with custom alphabet", () => {
     expect(expr).toBe(`${pick} || ${pick} || ${pick}`);
   });
 
-  it("clickhouse: emits arrayMap over range with rand(i)", () => {
+  it("clickhouse: emits arrayMap over range with per-row random seed", () => {
     expect(
       generatorToClickHouseExpr(
         { kind: "randomString", length: 4, alphabet: "01" },
         "n"
       )
     ).toBe(
-      "arrayStringConcat(arrayMap(i -> substring('01', toUInt32(rand(i) % 2) + 1, 1), range(4)))"
+      "arrayStringConcat(arrayMap(i -> substring('01', toUInt32(cityHash64(i, rand()) % 2) + 1, 1), range(4)))"
     );
   });
 

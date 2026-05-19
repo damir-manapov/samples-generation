@@ -84,8 +84,9 @@ export function generatorToClickHouseExpr(
         }
         const lit = escapeClickHouseLiteral(alpha);
         const n = String(alpha.length);
-        // rand(i) seeds per-element so each position is independent
-        return `arrayStringConcat(arrayMap(i -> substring(${lit}, toUInt32(rand(i) % ${n}) + 1, 1), range(${String(len)})))`;
+        // cityHash64(i, rand()) mixes per-position index with a per-row random
+        // seed so each row gets independent characters at each position.
+        return `arrayStringConcat(arrayMap(i -> substring(${lit}, toUInt32(cityHash64(i, rand()) % ${n}) + 1, 1), range(${String(len)})))`;
       }
       return `randomPrintableASCII(${String(len)})`;
     }
