@@ -483,3 +483,65 @@ describe("SQL expression generators - edge cases", () => {
     ).toBe("substr(md5(random()::text || row_id::text), 1, 5)");
   });
 });
+
+describe("randomString with custom alphabet", () => {
+  it("postgres: emits per-character pick concatenated", () => {
+    const expr = generatorToPostgresExpr(
+      { kind: "randomString", length: 3, alphabet: "abc" },
+      "n"
+    );
+    const pick = "substr('abc', floor(random() * 3)::int + 1, 1)";
+    expect(expr).toBe(`${pick} || ${pick} || ${pick}`);
+  });
+
+  it("clickhouse: emits arrayMap over range with rand(i)", () => {
+    expect(
+      generatorToClickHouseExpr(
+        { kind: "randomString", length: 4, alphabet: "01" },
+        "n"
+      )
+    ).toBe(
+      "arrayStringConcat(arrayMap(i -> substring('01', toUInt32(rand(i) % 2) + 1, 1), range(4)))"
+    );
+  });
+
+  it("sqlite: emits unrolled concat of substr picks", () => {
+    const expr = generatorToSqliteExpr(
+      { kind: "randomString", length: 2, alphabet: "XY" },
+      "n"
+    );
+    const pick = "substr('XY', abs(random()) % 2 + 1, 1)";
+    expect(expr).toBe(`${pick} || ${pick}`);
+  });
+
+  it("trino: emits transform over sequence", () => {
+    expect(
+      generatorToTrinoExpr(
+        { kind: "randomString", length: 5, alphabet: "abcdef" },
+        "n"
+      )
+    ).toBe(
+      "array_join(transform(sequence(1, 5), x -> substr('abcdef', CAST(floor(random() * 6) + 1 AS INTEGER), 1)), '')"
+    );
+  });
+
+  it("escapes single quotes in alphabet for every dialect", () => {
+    const cfg = {
+      kind: "randomString" as const,
+      length: 1,
+      alphabet: "a'b",
+    };
+    expect(generatorToPostgresExpr(cfg, "n")).toContain("'a''b'");
+    expect(generatorToClickHouseExpr(cfg, "n")).toContain("'a\\'b'");
+    expect(generatorToSqliteExpr(cfg, "n")).toContain("'a''b'");
+    expect(generatorToTrinoExpr(cfg, "n")).toContain("'a''b'");
+  });
+
+  it("throws when alphabet is empty", () => {
+    const cfg = { kind: "randomString" as const, length: 4, alphabet: "" };
+    expect(() => generatorToPostgresExpr(cfg, "n")).toThrow(/non-empty/);
+    expect(() => generatorToClickHouseExpr(cfg, "n")).toThrow(/non-empty/);
+    expect(() => generatorToSqliteExpr(cfg, "n")).toThrow(/non-empty/);
+    expect(() => generatorToTrinoExpr(cfg, "n")).toThrow(/non-empty/);
+  });
+});

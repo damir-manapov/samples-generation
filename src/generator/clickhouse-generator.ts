@@ -77,6 +77,16 @@ export function generatorToClickHouseExpr(
     }
     case "randomString": {
       const len = gen.length;
+      if (gen.alphabet !== undefined) {
+        const alpha = gen.alphabet;
+        if (alpha.length === 0) {
+          throw new Error("randomString.alphabet must be non-empty");
+        }
+        const lit = escapeClickHouseLiteral(alpha);
+        const n = String(alpha.length);
+        // rand(i) seeds per-element so each position is independent
+        return `arrayStringConcat(arrayMap(i -> substring(${lit}, toUInt32(rand(i) % ${n}) + 1, 1), range(${String(len)})))`;
+      }
       return `randomPrintableASCII(${String(len)})`;
     }
     case "choice": {

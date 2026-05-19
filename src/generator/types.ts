@@ -30,6 +30,19 @@ export interface RandomFloatGenerator {
 export interface RandomStringGenerator {
   kind: "randomString";
   length: number;
+  /**
+   * Optional alphabet to draw characters from. Must be non-empty.
+   *
+   * When omitted, each database falls back to its fastest native primitive:
+   * - PostgreSQL: lowercase hex (`0-9a-f`) via `md5()`
+   * - ClickHouse: all printable ASCII via `randomPrintableASCII()`
+   * - SQLite: uppercase hex (`0-9A-F`) via `hex(randomblob())`
+   * - Trino: lowercase hex (`0-9a-f`) via `uuid()` (length must be <= 32)
+   *
+   * When provided, every database emits a portable per-character pick
+   * expression that produces strings drawn uniformly from `alphabet`.
+   */
+  alphabet?: string;
 }
 
 export interface ChoiceGenerator<T = unknown> {

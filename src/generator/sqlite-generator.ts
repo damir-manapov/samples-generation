@@ -68,6 +68,16 @@ export function generatorToSqliteExpr(
     }
     case "randomString": {
       const len = gen.length;
+      if (gen.alphabet !== undefined) {
+        const alpha = gen.alphabet;
+        if (alpha.length === 0) {
+          throw new Error("randomString.alphabet must be non-empty");
+        }
+        const lit = escapeSqliteLiteral(alpha);
+        const n = String(alpha.length);
+        const pick = `substr(${lit}, abs(random()) % ${n} + 1, 1)`;
+        return Array.from({ length: len }, () => pick).join(" || ");
+      }
       // SQLite doesn't have md5, use hex(randomblob) and substr
       return `substr(hex(randomblob(${String(Math.ceil(len / 2))})), 1, ${String(len)})`;
     }

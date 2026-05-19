@@ -348,7 +348,7 @@ Example with nullable column:
 | `sequence`       | Auto-increment   | `start`, `step`                        |
 | `randomInt`      | Random integer   | `min`, `max`                           |
 | `randomFloat`    | Random float     | `min`, `max`, `precision` (default: 2) |
-| `randomString`   | Random string    | `length`                               |
+| `randomString`   | Random string    | `length`, `alphabet` (optional)        |
 | `choice`         | Pick from list   | `values`                               |
 | `choiceByLookup` | Optimized choice | `values` (large arrays)                |
 | `constant`       | Fixed value      | `value`                                |
@@ -374,6 +374,33 @@ Use `choiceByLookup` instead of `choice` when selecting from thousands of values
 - ClickHouse: `WITH` clause with array variable
 - SQLite: CTE with JSON array and `json_extract()`
 - Trino: CTE with `ARRAY[]` and `element_at()`
+
+#### `randomString` Generator
+
+Generates a random string of the given `length`. An optional `alphabet` restricts the characters that may appear.
+
+```typescript
+{
+  name: "code",
+  type: "string",
+  generator: {
+    kind: "randomString",
+    length: 8,
+    alphabet: "ABCDEFGHJKLMNPQRSTUVWXYZ23456789", // Crockford-ish, no look-alikes
+  }
+}
+```
+
+When `alphabet` is **omitted**, each database falls back to its fastest native primitive (recommended for very large datasets):
+
+| Database   | Default alphabet                       | Primitive used                         |
+| ---------- | -------------------------------------- | -------------------------------------- |
+| PostgreSQL | lowercase hex (`0-9a-f`)               | `md5()`                                |
+| ClickHouse | all printable ASCII (~95 chars)        | `randomPrintableASCII()`               |
+| SQLite     | uppercase hex (`0-9A-F`)               | `hex(randomblob())`                    |
+| Trino      | lowercase hex (`0-9a-f`), `length ≤ 32` | `uuid()`                              |
+
+When `alphabet` is set, every database emits a portable per-character pick expression that draws characters uniformly from the alphabet. This is somewhat slower than the native primitives but produces consistent output across engines and lets you avoid characters that break templates, CSV exports, or human readability.
 
 ### Generate Options
 

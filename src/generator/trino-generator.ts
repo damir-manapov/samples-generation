@@ -73,6 +73,15 @@ export function generatorToTrinoExpr(
     }
     case "randomString": {
       const len = gen.length;
+      if (gen.alphabet !== undefined) {
+        const alpha = gen.alphabet;
+        if (alpha.length === 0) {
+          throw new Error("randomString.alphabet must be non-empty");
+        }
+        const lit = escapeTrinoLiteral(alpha);
+        const n = String(alpha.length);
+        return `array_join(transform(sequence(1, ${String(len)}), x -> substr(${lit}, CAST(floor(random() * ${n}) + 1 AS INTEGER), 1)), '')`;
+      }
       // Trino doesn't have md5 on random, use substr of uuid
       return `substr(replace(cast(uuid() as varchar), '-', ''), 1, ${String(len)})`;
     }

@@ -70,6 +70,16 @@ export function generatorToPostgresExpr(
     }
     case "randomString": {
       const len = gen.length;
+      if (gen.alphabet !== undefined) {
+        const alpha = gen.alphabet;
+        if (alpha.length === 0) {
+          throw new Error("randomString.alphabet must be non-empty");
+        }
+        const lit = escapePostgresLiteral(alpha);
+        const n = String(alpha.length);
+        const pick = `substr(${lit}, floor(random() * ${n})::int + 1, 1)`;
+        return Array.from({ length: len }, () => pick).join(" || ");
+      }
       // Use md5 for random strings, repeat and substr for length
       return `substr(md5(random()::text || ${seqExpr}::text), 1, ${String(len)})`;
     }
