@@ -1,5 +1,7 @@
 # Changelog
 
+## [0.5.2](https://github.com/making-ventures/samples-generation/compare/v0.5.1...v0.5.2) (2026-05-19)
+
 ## [0.4.4](https://github.com/making-ventures/samples-generation/compare/v0.4.2...v0.4.4) (2025-12-24)
 
 ### Features
