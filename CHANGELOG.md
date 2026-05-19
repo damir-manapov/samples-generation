@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.6.1](https://github.com/making-ventures/samples-generation/compare/v0.6.0...v0.6.1) (2026-05-19)
+
+### Bug Fixes
+
+* **clickhouse:** randomString alphabet now varies per row ([0eed34f](https://github.com/making-ventures/samples-generation/commit/0eed34f39e6a886e03ad16b95f01caa13f965ded))
+
 ## [0.6.0](https://github.com/making-ventures/samples-generation/compare/v0.5.2...v0.6.0) (2026-05-19)
 
 ### Features
