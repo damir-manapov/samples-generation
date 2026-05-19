@@ -41,13 +41,14 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
+    "prepare": "simple-git-hooks",
     "prepublishOnly": "pnpm run build",
     "dev": "tsx src/index.ts",
     "test": "vitest run",
     "test:e2e": "vitest run --config vitest.e2e.config.ts",
     "test:watch": "vitest",
-    "lint": "biome lint .",
-    "lint:fix": "biome lint --write .",
+    "lint": "biome lint --error-on-warnings .",
+    "lint:fix": "biome lint --write --error-on-warnings .",
     "format": "biome format --write .",
     "format:check": "biome format .",
     "check": "biome check --write .",
@@ -64,22 +65,26 @@
     "compose:reset": "docker compose -f compose/docker-compose.yml down --volumes --remove-orphans"
   },
   "dependencies": {
-    "@clickhouse/client": "^1.17.0",
-    "@mkven/name-dictionaries": "^0.1.0",
-    "better-sqlite3": "^12.6.2",
+    "@clickhouse/client": "^1.18.5",
+    "@mkven/name-dictionaries": "^0.2.0",
+    "better-sqlite3": "^12.10.0",
     "pg-format": "^1.0.4",
-    "postgres": "^3.4.8",
+    "postgres": "^3.4.9",
     "trino-client": "^0.2.9"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.3.14",
-    "@release-it/conventional-changelog": "^10.0.5",
+    "@biomejs/biome": "^2.4.15",
+    "@release-it/conventional-changelog": "^11.0.0",
     "@types/better-sqlite3": "^7.6.13",
-    "@types/node": "^25.2.2",
+    "@types/node": "^25.9.0",
     "@types/pg-format": "^1.0.5",
-    "release-it": "^19.2.4",
-    "tsx": "^4.21.0",
-    "typescript": "^5.9.3",
-    "vitest": "^4.0.18"
+    "release-it": "^20.0.1",
+    "simple-git-hooks": "^2.13.1",
+    "tsx": "^4.22.3",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.6"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "bash all-checks.sh"
   }
 }

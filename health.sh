@@ -3,7 +3,8 @@ set -e
 
 echo "=== Checking for secrets with gitleaks ==="
 if command -v gitleaks &> /dev/null; then
-  gitleaks detect --source . -v
+  gitleaks git . -v
+  gitleaks dir . -v
 else
   echo "ERROR: gitleaks is not installed"
   echo "Install it from: https://github.com/gitleaks/gitleaks#installing"

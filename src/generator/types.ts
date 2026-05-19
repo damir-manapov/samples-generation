@@ -183,27 +183,27 @@ export interface TableConfig {
  */
 export interface CommonGenerateOptions {
   /** Create tables if not exists (default: true) */
-  createTable?: boolean;
+  createTable?: boolean | undefined;
   /** Truncate tables before generating (default: false) */
-  truncateFirst?: boolean;
+  truncateFirst?: boolean | undefined;
   /** Drop tables before generating (default: false) */
-  dropFirst?: boolean;
+  dropFirst?: boolean | undefined;
   /**
    * If true, queries the table for max values of sequence columns
    * and continues from there. Default: true.
    */
-  resumeSequences?: boolean;
+  resumeSequences?: boolean | undefined;
   /**
    * If true, runs database-specific optimization after insert
    * (VACUUM, OPTIMIZE TABLE, etc.). Default: true.
    */
-  optimize?: boolean;
+  optimize?: boolean | undefined;
   /**
    * Number of rows to generate per batch. If set, rows are inserted
    * in batches of this size. Useful for large datasets to avoid
    * memory issues and timeouts. Default: no batching (all at once).
    */
-  batchSize?: number;
+  batchSize?: number | undefined;
 }
 
 export interface GenerateOptions extends CommonGenerateOptions {
@@ -312,9 +312,9 @@ export interface ScenarioStepResult {
   /** Table name */
   tableName: string;
   /** Generation result (undefined for transform-only steps) */
-  generate?: GenerateResult;
+  generate?: GenerateResult | undefined;
   /** Transformation result (if transformations were defined) */
-  transform?: TransformResult;
+  transform?: TransformResult | undefined;
 }
 
 /**
