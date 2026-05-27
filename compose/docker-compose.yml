@@ -58,7 +58,7 @@ services:
       - minio_data:/data
 
   nessie:
-    image: ghcr.io/projectnessie/nessie:0.107.5
+    image: ghcr.io/projectnessie/nessie:0.107.6
     environment:
       QUARKUS_HTTP_PORT: 19120
     ports:
@@ -115,7 +115,7 @@ services:
         echo "Bucket 'warehouse' ready"
 
   clickhouse:
-    image: clickhouse/clickhouse-server:26.4
+    image: clickhouse/clickhouse-server:26.5
     environment:
       CLICKHOUSE_USER: default
       CLICKHOUSE_PASSWORD: clickhouse
