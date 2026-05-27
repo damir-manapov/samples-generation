@@ -73,16 +73,16 @@
     "trino-client": "^0.2.9"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.15",
+    "@biomejs/biome": "^2.4.16",
     "@release-it/conventional-changelog": "^11.0.0",
     "@types/better-sqlite3": "^7.6.13",
-    "@types/node": "^25.9.0",
+    "@types/node": "^25.9.1",
     "@types/pg-format": "^1.0.5",
     "release-it": "^20.0.1",
     "simple-git-hooks": "^2.13.1",
     "tsx": "^4.22.3",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.6"
+    "vitest": "^4.1.7"
   },
   "simple-git-hooks": {
     "pre-commit": "bash all-checks.sh"

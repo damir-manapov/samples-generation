@@ -4,6 +4,7 @@ import { escapeTrinoIdentifier, escapeTrinoLiteral } from "./escape.js";
 import type {
   ChoiceByLookupGenerator,
   ColumnConfig,
+  DuplicateTransformation,
   GeneratedRow,
   GeneratorConfig,
   MutationOperation,
@@ -429,6 +430,9 @@ export class TrinoDataGenerator extends BaseDataGenerator {
     const trino = this.getTrino();
     const fullTableName = `${this.fullSchemaPath}.${escapeTrinoIdentifier(tableName)}`;
     const setClauses: string[] = [];
+    const duplicateTransformations = transformations.filter(
+      (t): t is DuplicateTransformation => t.kind === "duplicate"
+    );
 
     for (const t of transformations) {
       switch (t.kind) {
@@ -517,6 +521,10 @@ export class TrinoDataGenerator extends BaseDataGenerator {
           // Swap handled separately - needs both columns in one UPDATE with same random
           break;
         }
+        case "duplicate": {
+          // Duplicate handled separately - needs a per-row donor mapping
+          break;
+        }
       }
     }
 
@@ -539,6 +547,36 @@ export class TrinoDataGenerator extends BaseDataGenerator {
       `;
       const swapResult = await trino.query(swapSql);
       await this.executeQuery(swapResult, "swap transformation");
+    }
+
+    for (const dup of duplicateTransformations) {
+      const keyCol = escapeTrinoIdentifier(dup.keyColumn);
+      const targetCol = escapeTrinoIdentifier(dup.column);
+      const ratio = String(dup.ratio);
+
+      const dupSql = `
+        WITH numbered AS (
+          SELECT
+            ${keyCol} AS _k,
+            ${targetCol} AS _v,
+            row_number() OVER (ORDER BY random()) AS _rn,
+            count(*) OVER () AS _cnt
+          FROM ${fullTableName}
+        ),
+        mapping AS (
+          SELECT
+            a._k AS _k,
+            b._v AS _donor_v
+          FROM numbered a
+          JOIN numbered b
+            ON b._rn = (CASE WHEN a._rn = a._cnt THEN 1 ELSE a._rn + 1 END)
+        )
+        UPDATE ${fullTableName}
+        SET ${targetCol} = (SELECT m._donor_v FROM mapping m WHERE m._k = ${fullTableName}.${keyCol})
+        WHERE random() < ${ratio}
+      `;
+      const dupResult = await trino.query(dupSql);
+      await this.executeQuery(dupResult, "duplicate transformation");
     }
 
     if (setClauses.length === 0) return;

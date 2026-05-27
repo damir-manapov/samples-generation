@@ -502,6 +502,17 @@ interface TransformResult {
 
 > **Design Note:** PostgreSQL, SQLite, and Trino execute each swap as a separate `UPDATE ... WHERE random() < probability` statement. This is intentionally not batched because UPDATE is a lightweight operation on these databases. ClickHouse batches swaps because each swap would otherwise require a full table copy (CREATE → INSERT → RENAME → DROP), making the overhead significant.
 
+**Duplicate Transformation** - Create duplicates for a column with a given ratio:
+
+```typescript
+{
+  kind: "duplicate",
+  column: "email",     // Column to duplicate values in
+  keyColumn: "id",     // A unique row identifier (primary key / sequence column)
+  ratio: 0.3           // ~30% of rows get their value replaced by another row's value
+}
+```
+
 #### Batching Transformations
 
 Transformations are organized in batches for efficiency:
