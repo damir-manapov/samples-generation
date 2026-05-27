@@ -4,6 +4,7 @@ import { escapePostgresIdentifier, escapePostgresLiteral } from "./escape.js";
 import type {
   ChoiceByLookupGenerator,
   ColumnConfig,
+  DuplicateTransformation,
   GeneratedRow,
   GeneratorConfig,
   MutationOperation,
@@ -294,6 +295,9 @@ export class PostgresDataGenerator extends BaseDataGenerator {
 
     const escapedTable = escapePostgresIdentifier(tableName);
     const setClauses: string[] = [];
+    const duplicateTransformations = transformations.filter(
+      (t): t is DuplicateTransformation => t.kind === "duplicate"
+    );
 
     for (const t of transformations) {
       switch (t.kind) {
@@ -372,6 +376,10 @@ export class PostgresDataGenerator extends BaseDataGenerator {
           // Skip here, will be handled after the loop
           break;
         }
+        case "duplicate": {
+          // Duplicate handled separately - needs a per-row donor mapping
+          break;
+        }
       }
     }
 
@@ -394,6 +402,36 @@ export class PostgresDataGenerator extends BaseDataGenerator {
         WHERE random() < ${prob}
       `;
       await sql.unsafe(swapSql);
+    }
+
+    for (const dup of duplicateTransformations) {
+      const keyCol = escapePostgresIdentifier(dup.keyColumn);
+      const targetCol = escapePostgresIdentifier(dup.column);
+      const ratio = String(dup.ratio);
+
+      const dupSql = `
+        WITH numbered AS (
+          SELECT
+            ${keyCol} AS _k,
+            ${targetCol} AS _v,
+            row_number() OVER (ORDER BY random()) AS _rn,
+            count(*) OVER () AS _cnt
+          FROM ${escapedTable}
+        ),
+        mapping AS (
+          SELECT
+            a._k AS _k,
+            b._v AS _donor_v
+          FROM numbered a
+          JOIN numbered b
+            ON b._rn = (CASE WHEN a._rn = a._cnt THEN 1 ELSE a._rn + 1 END)
+        )
+        UPDATE ${escapedTable} t
+        SET ${targetCol} = (SELECT m._donor_v FROM mapping m WHERE m._k = t.${keyCol})
+        WHERE random() < ${ratio}
+      `;
+
+      await sql.unsafe(dupSql);
     }
 
     if (setClauses.length === 0) return;

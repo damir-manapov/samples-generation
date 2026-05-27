@@ -927,6 +927,65 @@ describe.each(generators.filter((g) => !g.skip))("DataGenerator: $name", ({
     await generator.dropTable(swapTable.name);
   });
 
+  it("should apply duplicate transformation with given ratio", {
+    timeout: 30_000,
+  }, async () => {
+    const dupTable: TableConfig = {
+      name: "test_duplicate_ratio",
+      columns: [
+        {
+          name: "id",
+          type: "integer",
+          generator: { kind: "sequence", start: 1 },
+        },
+        {
+          name: "email",
+          type: "string",
+          generator: {
+            kind: "randomString",
+            length: 12,
+            alphabet: "abcdef012345",
+          },
+        },
+      ],
+    };
+
+    await generator.dropTable(dupTable.name);
+    await generator.createTable(dupTable);
+    await generator.generate({
+      table: dupTable,
+      rowCount: 200,
+      createTable: false,
+      optimize: false,
+    });
+
+    await generator.transform(dupTable.name, [
+      {
+        transformations: [
+          {
+            kind: "duplicate",
+            column: "email",
+            keyColumn: "id",
+            ratio: 0.3,
+          },
+        ],
+      },
+    ]);
+
+    const rows = await generator.queryRows(dupTable.name, 1000);
+    expect(rows.length).toBe(200);
+
+    const emails = rows.map((r) => String(r.email));
+    const distinctCount = new Set(emails).size;
+
+    // With 30% duplication, we expect a noticeable drop in distinct values.
+    // Use a wide margin to avoid flakiness across DB engines.
+    expect(distinctCount).toBeLessThan(180);
+    expect(distinctCount).toBeGreaterThan(80);
+
+    await generator.dropTable(dupTable.name);
+  });
+
   it("should support batch descriptions for transformations", {
     timeout: 30_000,
   }, async () => {

@@ -156,11 +156,31 @@ export interface SwapTransformation {
   probability: number;
 }
 
+/**
+ * Duplicate transformation - make a ratio of rows share the same value (create duplicates).
+ *
+ * This is useful for simulating entity resolution / deduplication scenarios, where some
+ * records intentionally contain repeated values (e.g., duplicate emails or names).
+ */
+export interface DuplicateTransformation {
+  kind: "duplicate";
+  /** Column to duplicate values in */
+  column: string;
+  /**
+   * Column that uniquely identifies a row and can be used to join/update safely.
+   * Typically this is your primary key / sequence column (e.g., "id").
+   */
+  keyColumn: string;
+  /** Ratio of rows to duplicate (0-1). */
+  ratio: number;
+}
+
 export type Transformation =
   | TemplateTransformation
   | MutateTransformation
   | LookupTransformation
-  | SwapTransformation;
+  | SwapTransformation
+  | DuplicateTransformation;
 
 /**
  * A batch of transformations with optional description.

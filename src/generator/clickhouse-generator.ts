@@ -6,6 +6,7 @@ import {
 } from "./escape.js";
 import type {
   ColumnConfig,
+  DuplicateTransformation,
   GeneratedRow,
   GeneratorConfig,
   LookupTransformation,
@@ -319,6 +320,9 @@ export class ClickHouseDataGenerator extends BaseDataGenerator {
     const client = this.getClient();
     const escapedTable = escapeClickHouseIdentifier(tableName);
     const setClauses: string[] = [];
+    const duplicateTransformations = transformations.filter(
+      (t): t is DuplicateTransformation => t.kind === "duplicate"
+    );
 
     for (const t of transformations) {
       switch (t.kind) {
@@ -404,6 +408,10 @@ export class ClickHouseDataGenerator extends BaseDataGenerator {
           // to ensure same random value is used for both columns
           break;
         }
+        case "duplicate": {
+          // Duplicate handled separately via table swap approach
+          break;
+        }
       }
     }
 
@@ -415,6 +423,13 @@ export class ClickHouseDataGenerator extends BaseDataGenerator {
     if (swapTransformations.length > 0) {
       // Batch all swaps into a single table swap operation
       await this.applySwapTransformations(tableName, swapTransformations);
+    }
+
+    if (duplicateTransformations.length > 0) {
+      await this.applyDuplicateTransformations(
+        tableName,
+        duplicateTransformations
+      );
     }
 
     // Only run ALTER TABLE UPDATE if there are SET clauses
@@ -429,6 +444,95 @@ export class ClickHouseDataGenerator extends BaseDataGenerator {
         mutations_sync: "2", // Wait for all replicas
       },
     });
+  }
+
+  /**
+   * Apply one or more duplicate transformations using ClickHouse's table swap approach.
+   *
+   * ClickHouse ALTER TABLE UPDATE doesn't support correlated subqueries, so we build
+   * a new table by joining rows with a "donor" row from a random permutation.
+   */
+  private async applyDuplicateTransformations(
+    tableName: string,
+    duplicates: DuplicateTransformation[]
+  ): Promise<void> {
+    const client = this.getClient();
+    const escapedTable = escapeClickHouseIdentifier(tableName);
+
+    const uniqueSuffix = `${String(Date.now())}_${Math.random().toString(36).slice(2, 8)}`;
+    const tempTable = escapeClickHouseIdentifier(
+      `${tableName}_dup_temp_${uniqueSuffix}`
+    );
+    const oldTable = escapeClickHouseIdentifier(
+      `${tableName}_dup_old_${uniqueSuffix}`
+    );
+
+    const structResult = await client.query({
+      query: `SHOW CREATE TABLE ${escapedTable}`,
+      format: "TabSeparated",
+    });
+    const createStatement = (await structResult.text())
+      .replace(/\\n/g, "\n")
+      .replace(/\\t/g, "\t");
+
+    const tempCreateSql = createStatement.replace(
+      /CREATE TABLE [^\s(]+/,
+      `CREATE TABLE ${tempTable}`
+    );
+    await client.command({ query: tempCreateSql });
+
+    const colsResult = await client.query({
+      query: `SELECT name FROM system.columns WHERE database = currentDatabase() AND table = '${tableName}'`,
+      format: "JSONEachRow",
+    });
+    const colsData = await colsResult.json<{ name: string }>();
+    const allColumns = (colsData as { name: string }[]).map((c) =>
+      escapeClickHouseIdentifier(c.name)
+    );
+
+    const dupInfo = new Map<string, { ratio: string; randVar: string }>();
+    duplicates.forEach((dup, i) => {
+      dupInfo.set(escapeClickHouseIdentifier(dup.column), {
+        ratio: String(dup.ratio),
+        randVar: `_dup_rand_${String(i)}`,
+      });
+    });
+
+    const randVars = duplicates
+      .map((_, i) => `rand() / 4294967295.0 as _dup_rand_${String(i)}`)
+      .join(", ");
+
+    const selectColumns = allColumns.map((col) => {
+      const info = dupInfo.get(col);
+      if (info) {
+        return `if(${info.randVar} < ${info.ratio}, _donor.${col}, _inner.${col}) as ${col}`;
+      }
+      return `_inner.${col}`;
+    });
+
+    const insertSql = `
+      INSERT INTO ${tempTable}
+      WITH numbered AS (
+        SELECT
+          ${allColumns.map((c) => `${c}`).join(", ")},
+          row_number() OVER (ORDER BY rand()) AS _rn,
+          count(*) OVER () AS _cnt
+          ${randVars ? `, ${randVars}` : ""}
+        FROM ${escapedTable}
+      )
+      SELECT
+        ${selectColumns.join(", ")}
+      FROM numbered AS _inner
+      JOIN numbered AS _donor
+        ON _donor._rn = if(_inner._rn = _inner._cnt, 1, _inner._rn + 1)
+    `;
+
+    await client.command({ query: insertSql });
+
+    await client.command({
+      query: `RENAME TABLE ${escapedTable} TO ${oldTable}, ${tempTable} TO ${escapedTable}`,
+    });
+    await client.command({ query: `DROP TABLE ${oldTable}` });
   }
 
   /**

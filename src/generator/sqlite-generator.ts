@@ -4,6 +4,7 @@ import { escapeSqliteLiteral } from "./escape.js";
 import type {
   ChoiceByLookupGenerator,
   ColumnConfig,
+  DuplicateTransformation,
   GeneratedRow,
   GeneratorConfig,
   MutationOperation,
@@ -308,6 +309,9 @@ export class SQLiteDataGenerator extends BaseDataGenerator {
     const escapeId = (name: string): string => `"${name.replace(/"/g, '""')}"`;
     const escapedTable = escapeId(tableName);
     const setClauses: string[] = [];
+    const duplicateTransformations = transformations.filter(
+      (t): t is DuplicateTransformation => t.kind === "duplicate"
+    );
 
     for (const t of transformations) {
       switch (t.kind) {
@@ -387,6 +391,10 @@ export class SQLiteDataGenerator extends BaseDataGenerator {
           // Swap handled separately - needs both columns in one UPDATE
           break;
         }
+        case "duplicate": {
+          // Duplicate handled separately - needs a per-row donor mapping
+          break;
+        }
       }
     }
 
@@ -409,6 +417,36 @@ export class SQLiteDataGenerator extends BaseDataGenerator {
         WHERE abs(random()) / 9223372036854775807.0 < ${prob}
       `;
       db.exec(swapSql);
+    }
+
+    for (const dup of duplicateTransformations) {
+      const keyCol = escapeId(dup.keyColumn);
+      const targetCol = escapeId(dup.column);
+      const ratio = String(dup.ratio);
+
+      const dupSql = `
+        WITH numbered AS (
+          SELECT
+            ${keyCol} AS _k,
+            ${targetCol} AS _v,
+            row_number() OVER (ORDER BY random()) AS _rn,
+            count(*) OVER () AS _cnt
+          FROM ${escapedTable}
+        ),
+        mapping AS (
+          SELECT
+            a._k AS _k,
+            b._v AS _donor_v
+          FROM numbered a
+          JOIN numbered b
+            ON b._rn = (CASE WHEN a._rn = a._cnt THEN 1 ELSE a._rn + 1 END)
+        )
+        UPDATE ${escapedTable}
+        SET ${targetCol} = (SELECT m._donor_v FROM mapping m WHERE m._k = ${escapedTable}.${keyCol})
+        WHERE abs(random()) / 9223372036854775807.0 < ${ratio}
+      `;
+
+      db.exec(dupSql);
     }
 
     if (setClauses.length === 0) return Promise.resolve();
