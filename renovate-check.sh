@@ -9,10 +9,30 @@ echo ""
 # Workaround for Node.js 24+ "happy eyeballs" (autoSelectFamily) bug
 # that causes timeouts when connecting to hosts with both IPv4 and IPv6
 # but broken IPv6 connectivity (like Docker Hub on some networks)
-PRELOAD_SCRIPT=$(mktemp)
-echo "require('net').setDefaultAutoSelectFamily(false);" > "$PRELOAD_SCRIPT"
-trap "rm -f $PRELOAD_SCRIPT" EXIT
-export NODE_OPTIONS="${NODE_OPTIONS:-} --require=$PRELOAD_SCRIPT --dns-result-order=ipv4first"
+UNAME_S="$(uname -s 2>/dev/null || true)"
+IS_WINDOWS=false
+if [[ "${OS:-}" == "Windows_NT" ]] || [[ "$UNAME_S" == MINGW* ]] || [[ "$UNAME_S" == MSYS* ]] || [[ "$UNAME_S" == CYGWIN* ]]; then
+  IS_WINDOWS=true
+fi
+
+# On Windows (Git Bash), Node can't reliably `--require` POSIX temp paths like `/tmp/...`.
+# We still keep ipv4-first to reduce flakiness in some networks.
+if [[ "$IS_WINDOWS" == "true" ]]; then
+  if [[ -n "${NODE_OPTIONS:-}" ]]; then
+    export NODE_OPTIONS="${NODE_OPTIONS} --dns-result-order=ipv4first"
+  else
+    export NODE_OPTIONS="--dns-result-order=ipv4first"
+  fi
+else
+  PRELOAD_SCRIPT="$(mktemp)"
+  echo "require('net').setDefaultAutoSelectFamily(false);" > "$PRELOAD_SCRIPT"
+  trap "rm -f $PRELOAD_SCRIPT" EXIT
+  if [[ -n "${NODE_OPTIONS:-}" ]]; then
+    export NODE_OPTIONS="${NODE_OPTIONS} --require=$PRELOAD_SCRIPT --dns-result-order=ipv4first"
+  else
+    export NODE_OPTIONS="--require=$PRELOAD_SCRIPT --dns-result-order=ipv4first"
+  fi
+fi
 
 # Run renovate with JSON output and debug level to get version info
 OUTPUT=$(LOG_FORMAT=json LOG_LEVEL=debug npx -y renovate --platform=local --dry-run 2>&1 || true)
